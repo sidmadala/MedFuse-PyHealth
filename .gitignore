@@ -16,6 +16,7 @@ parse_hp_results.py
 fusion_main_hp_search_medfuse_ratio.py
 fusion_main_hp_search_per_task.py
 data
+normalizers
 ._.DS_Store
 .DS_Store
 jobs

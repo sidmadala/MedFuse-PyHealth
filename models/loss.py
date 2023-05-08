@@ -3,8 +3,6 @@ from __future__ import print_function
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-import numpy as np
 from numpy import linalg as LA
 from torch.nn.functional import kl_div, softmax, log_softmax
 

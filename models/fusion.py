@@ -1,12 +1,10 @@
 
 import torch.nn as nn
-import torchvision
 import torch
 import numpy as np
 
 from torch.nn.functional import kl_div, softmax, log_softmax
-from .loss import RankingLoss, CosineLoss, KLDivLoss
-import torch.nn.functional as F
+from .loss import CosineLoss, KLDivLoss
 
 class Fusion(nn.Module):
     def __init__(self, args, ehr_model, cxr_model):

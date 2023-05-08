@@ -1,12 +1,8 @@
-
 import torch.nn as nn
 import torchvision
 import torch
-import numpy as np
 
 from torch.nn.functional import kl_div, softmax, log_softmax
-from .loss import RankingLoss, CosineLoss
-import torch.nn.functional as F
 
 class CXRModels(nn.Module):
 

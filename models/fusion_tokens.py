@@ -16,13 +16,10 @@ class FusionTokens(nn.Module):
         self.ehr_model = ehr_model
         self.cxr_model = cxr_model
 
-
         target_classes = self.args.num_classes
         lstm_in = self.ehr_model.feats_dim
         lstm_out = self.cxr_model.feats_dim
         projection_in = self.cxr_model.feats_dim
-
-        
 
         if self.args.labels_set == 'radiology':
             target_classes = self.args.vision_num_classes

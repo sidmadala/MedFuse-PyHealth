@@ -40,10 +40,6 @@ class Fusion(nn.Module):
         self.align_loss = CosineLoss()
         self.kl_loss = KLDivLoss()
 
-
-
-        
-
         self.lstm_fused_cls =  nn.Sequential(
             nn.Linear(lstm_out, target_classes),
             nn.Sigmoid()

@@ -9,6 +9,7 @@ Table of Contents
 <!--ts-->
   <!-- * [Background](#Background) -->
   * [Overview](#Overview)
+  * [Background](#Background)
   * [Environment setup](#Environment-setup)
   * [Dataset](#Dataset)
   * [Model training](#Model-training)
@@ -16,56 +17,38 @@ Table of Contents
   * [Citation](#Citation)
 <!--te-->
 
-<!-- Background
+Background
 ============
-Multi-modal fusion approaches aim to integrate information from different data sources. Unlike natural datasets, such as in audio-visual applications, where samples consist of “paired” modalities, data in healthcare is often collected asynchronously. Hence, requiring the presence of all modalities for a given sample is not realistic for clinical tasks and significantly limits the size of the dataset during training. In this paper, we propose MedFuse, a conceptually simple yet promising LSTM-based fusion module that can accommodate uni-modal as well as multi-modal input. We evaluate the fusion method and introduce new benchmark results for in-hospital mortality prediction and phenotype classification, using clinical time-series data in the MIMIC-IV dataset and corresponding chest X-ray images in MIMIC-CXR. Compared to more complex multi-modal fusion strategies, MedFuse provides a performance improvement by a large margin on the fully paired test set. It also remains robust across the partially paired test set containing samples with missing chest X-ray images. -->
+The paper I have chosen to reproduce is MedFuse, a multi-modal approach to classification via clinical data and x-ray images (Hayat et al., 2022). Multi-modal learning underpins many state-of-the-art (SOTA) models, including the recently released GPT-4, which can both produce images from natural text descriptions, as well as alter given images while maintaining conversational abilities with human users (OpenAI, 2023). However, most current applications require that all modalities be present at the same time for the model to function (̈Polsterl et al., 2021). This presents a unique challenge for medical machine learning models, as clinicians are likely to either write clinical notes before administering X-Rays and other scans, or forgo these imaging solutions entirely if deemed unnecessary. Thus, most patient data is heterogeneous in nature, which interferes with the usage of existing architectures as off-the-shelf solutions.
+
+Thus, the authors propose MedFuse, a unique architecture that is able to integrate medical data from different sources (i.e. clinical notes, chest X-Rays, etc.) without requiring all modalities to be present before inference. A challenge with developing this model is that (at the time of writing) there are no widely available multi-modal clinical datasets for benchmarking. Therefore, the authors utilize MIMIC-IV (Johnson et al., 2023) in conjunction with MIMIC-CXR (Johnson et al., 2019) to match patients with their X-Rays for multi-modal prediction on in-hospital mortality and phenotyping. This data mimics real world scenarios whereby some patients have all modalities, while others only contain clinical notes about their hospital stay.
 
 
 Overview of the MedFuse network
 ====================================
 
-We first extract and link the datasets from MIMIC-IV and MIMIC-CXR based on the task definition (i.e., inhospital mortality prediction,
-or phenotype classification). The data splits of the training, validation, and test sets are summarized for each task, and the prevalence of positive and negative labels for in-hospital mortality is shown. Phenotype classification involves 25 labels as shown in Table 4.
+We extract MIMIC-IV and MIMIC-CXR data based on the task (i.e. phenotyping or in-hospital mortality). Data splits, along with general statistics are shown below. We follow the same preprocessing pipeline outlined by the authors to ensure datasets remain the same.
 ![](figures/overview_updated.png)
 
 
 Environment setup
 ==================
 
-    git clone https://github.com/sidmadala/MedFuse-Reproduce.git
-    cd MedFuse
-    conda env create -f medfuse.yml
-    conda activate medfuse
+```
+git clone https://github.com/sidmadala/MedFuse-Reproduce.git
+cd MedFuse
+conda env create -f medfuse.yml
+conda activate medfuse
+```
 
 Dataset
 -------------
 
 
-We used [MIMIC-IV EHR](https://physionet.org/content/mimiciv/1.0/) and [MIMIC CXR](https://physionet.org/content/mimic-cxr-jpg/2.0.0/) for all the experiments. We provide the modified [script for MIMIC-IV](mimic4extract/README.md) originally developed for [MIMIC-III](https://github.com/YerevaNN/mimic3-benchmarks). Follow the [readme](mimic4extract/README.md) to extract and prepare the time-series EHR dataset for experiments. Download the [MIMIC CXR](https://physionet.org/content/mimic-cxr-jpg/2.0.0/) dataset.
+We used [MIMIC-IV EHR](https://physionet.org/content/mimiciv/1.0/) and [MIMIC CXR](https://physionet.org/content/mimic-cxr-jpg/2.0.0/) for all the experiments. We follow the same outline as the original authors in generating the cleaned dataset via [script for MIMIC-IV](mimic4extract/README.md). Follow the [README](mimic4extract/README.md) to extract and prepare the time-series EHR dataset for experiments.
 
 Please specify the ehr_data_dir and cxr_data_dir directories paths before running the scripts.
 
-
-We preprocess the cxr images and resize them to a relatively smaller dimension.
-Please run following to resize the images
-
-```
-python resize.py
-```
-
-we exclude the subjects from training split of CXR dataset which are present in validation and test splits of EHR dataset, please run the following
-
-```
-python create_split.py
-```
-
-we use following multi-modal data configuration, "partial" defines the icu stays with clinical time series extracted from MIMIC-IV(ehr) samples and with or without a chest X-ray image(cxr). The "paired" are only the icu stays with both ehr as well as cxr samples. 
-
-Argument "data_pairs" takes any of these options 'paired_ehr_cxr' samples both modalities(ehr+cxr) for paired icu stays, 'paired_ehr' samples only ehr for paired icu stays, 'partial_ehr' samples only ehr for partial icu stays, 'partial_ehr_cxr' samples both ehr and cxr for partial icu stays, and 'radiology' samples all of the MIMIC CXR samples with radiology labels 
-
-Argument 'fusion_type' defines the fusion baselines and our proposed approach, options include 'daft', 'mmtm', 'joint', 'early', 'uni_ehr', 'uni_cxr'.
-
-Please refer to arguments.py for further configurations.
 
 Overview of the network with MedFuse module
 ====================================
@@ -98,12 +81,13 @@ sh ./scripts/mortality/train/medFuse.sh
 sh ./scripts/phenotyping/train/medFuse.sh
 ```
 
-We provide the training and evaluation scripts inside 'scripts' directory for other baselines as well for the results reported in the paper. 
-Note these scripts contain the best Learning rates found from 10 random sampled learning rates in range (0.001-0.00001)
+For training the ablation study modules, please replace the above scripts with ```early.sh```
+
 
 Model evaluation
 ------------------
-Set the 'load_state' argument to the best model checkpoint path from above experiments before running the following scripts.
+Set the 'load_state' argument to the best model checkpoint path from above experiments before running the following scripts. Also set the ```mode``` argument to ```eval``` before running evaluation scripts.
+
 ```
 # med fuse for in hospital mortality
 sh ./scripts/mortality/eval/medFuse.sh
@@ -115,7 +99,7 @@ sh ./scripts/phenotyping/eval/medFuse.sh
 Citation 
 ============
 
-This code reproduces and makes use of code from the following paper/repository:
+This code reproduces the following paper's experiments:
 
 ```
 @misc{https://doi.org/10.48550/arxiv.2207.07027,
